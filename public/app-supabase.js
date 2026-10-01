@@ -9,6 +9,9 @@ const authTitle = document.getElementById('authTitle');
 const authSubmit = document.getElementById('authSubmit');
 const authToggle = document.getElementById('authToggle');
 const authMessage = document.getElementById('authMessage');
+const resendConfirmation = document.getElementById('resendConfirmation');
+const authEmailField = document.getElementById('authEmailField');
+const forgotPassword = document.getElementById('forgotPassword');
 const authEmail = document.getElementById('authEmail');
 const authPassword = document.getElementById('authPassword');
 const currentUserEmail = document.getElementById('currentUserEmail');
@@ -44,12 +47,30 @@ function setAuthMessage(message, isError = false) {
   authMessage.classList.toggle('error', isError);
 }
 
+function authErrorMessage(error) {
+  const message = error.message || '';
+  if (/email not confirmed/i.test(message)) {
+    resendConfirmation.classList.remove('hidden');
+    return 'Debes confirmar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada o solicita otro enlace.';
+  }
+  if (/invalid login credentials/i.test(message)) {
+    return 'Correo o contraseña incorrectos. Si acabas de registrarte, confirma primero el correo.';
+  }
+  return message || 'No se pudo completar la solicitud.';
+}
+
 function renderAuthMode() {
   const isSignUp = authMode === 'signup';
-  authTitle.textContent = isSignUp ? 'Crear cuenta' : 'Iniciar sesión';
-  authSubmit.textContent = isSignUp ? 'Registrarme' : 'Entrar';
+  const isRecovery = authMode === 'recovery';
+  authTitle.textContent = isRecovery ? 'Cambiar contraseña' : isSignUp ? 'Crear cuenta' : 'Iniciar sesión';
+  authSubmit.textContent = isRecovery ? 'Actualizar contraseña' : isSignUp ? 'Registrarme' : 'Entrar';
   authToggle.textContent = isSignUp ? 'Ya tengo una cuenta' : 'Crear cuenta';
-  authPassword.autocomplete = isSignUp ? 'new-password' : 'current-password';
+  authPassword.autocomplete = isSignUp || isRecovery ? 'new-password' : 'current-password';
+  authEmailField.classList.toggle('hidden', isRecovery);
+  authEmail.required = !isRecovery;
+  authToggle.classList.toggle('hidden', isRecovery);
+  forgotPassword.classList.toggle('hidden', authMode !== 'signin');
+  resendConfirmation.classList.add('hidden');
   setAuthMessage('');
 }
 
@@ -141,32 +162,92 @@ authForm.addEventListener('submit', async event => {
   setAuthMessage('Conectando...');
 
   try {
-    const credentials = {
-      email: authEmail.value.trim(),
-      password: authPassword.value
-    };
-    const result = authMode === 'signup'
+    const result = authMode === 'recovery'
+      ? await supabaseClient.auth.updateUser({ password: authPassword.value })
+      : authMode === 'signup'
       ? await supabaseClient.auth.signUp({
-        ...credentials,
+        email: authEmail.value.trim(),
+        password: authPassword.value,
         options: { emailRedirectTo: window.location.origin }
       })
-      : await supabaseClient.auth.signInWithPassword(credentials);
+      : await supabaseClient.auth.signInWithPassword({
+        email: authEmail.value.trim(),
+        password: authPassword.value
+      });
 
     if (result.error) {
       throw result.error;
     }
 
     if (authMode === 'signup' && !result.data.session) {
-      setAuthMessage('Cuenta creada. Revisa tu correo para confirmar el registro.');
+      setAuthMessage('Cuenta creada. Confirma tu correo con el enlace que te enviamos antes de iniciar sesión.');
+      resendConfirmation.classList.remove('hidden');
       return;
     }
 
     authForm.reset();
-    setAuthMessage('');
+    if (authMode === 'recovery') {
+      authMode = 'signin';
+      renderAuthMode();
+      showSession(result.data.user);
+      await fetchTasks();
+    } else {
+      setAuthMessage('');
+    }
   } catch (error) {
-    setAuthMessage(error.message || 'No se pudo iniciar sesión.', true);
+    setAuthMessage(authErrorMessage(error), true);
   } finally {
     authSubmit.disabled = false;
+  }
+});
+
+forgotPassword.addEventListener('click', async () => {
+  const email = authEmail.value.trim();
+  if (!email) {
+    setAuthMessage('Escribe tu correo para recibir el enlace de recuperación.', true);
+    authEmail.focus();
+    return;
+  }
+
+  forgotPassword.disabled = true;
+  try {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin
+    });
+    if (error) {
+      throw error;
+    }
+    setAuthMessage('Si existe una cuenta con ese correo, enviaremos un enlace para cambiar la contraseña.');
+  } catch (error) {
+    setAuthMessage(authErrorMessage(error), true);
+  } finally {
+    forgotPassword.disabled = false;
+  }
+});
+
+resendConfirmation.addEventListener('click', async () => {
+  const email = authEmail.value.trim();
+  if (!email) {
+    setAuthMessage('Escribe tu correo para reenviar la confirmación.', true);
+    authEmail.focus();
+    return;
+  }
+
+  resendConfirmation.disabled = true;
+  try {
+    const { error } = await supabaseClient.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    if (error) {
+      throw error;
+    }
+    setAuthMessage('Si la cuenta requiere confirmación, enviaremos un nuevo enlace al correo indicado.');
+  } catch (error) {
+    setAuthMessage(authErrorMessage(error), true);
+  } finally {
+    resendConfirmation.disabled = false;
   }
 });
 
@@ -260,12 +341,31 @@ async function initialize() {
     setAuthMessage(error.message, true);
   }
 
-  showSession(data.session?.user);
-  if (data.session?.user) {
+  const recoveryRequested = window.location.hash.includes('type=recovery')
+    || new URLSearchParams(window.location.search).get('type') === 'recovery';
+
+  if (recoveryRequested) {
+    authMode = 'recovery';
+    showSession(null);
+    renderAuthMode();
+    setAuthMessage('Escribe una contraseña nueva para tu cuenta.');
+  } else {
+    showSession(data.session?.user);
+  }
+
+  if (data.session?.user && !recoveryRequested) {
     await fetchTasks();
   }
 
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      authMode = 'recovery';
+      showSession(null);
+      renderAuthMode();
+      setAuthMessage('Escribe una contraseña nueva para tu cuenta.');
+      return;
+    }
+
     showSession(session?.user);
     if (session?.user) {
       fetchTasks().catch(error => alert(error.message || 'No se pudieron cargar las tareas.'));

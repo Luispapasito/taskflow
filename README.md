@@ -31,7 +31,7 @@ Las tareas se guardan en `public.tasks` en Supabase. Para usarlas, crea una cuen
 
 La configuración del proyecto está en `public/supabase-config.js`. Contiene la URL y la clave publicable de Supabase, que puede estar en el cliente porque las políticas RLS protegen los datos. No agregues claves secretas ni `service_role` al navegador.
 
-La confirmación de correo puede estar activada en Supabase Auth. En ese caso, confirma el enlace recibido antes de iniciar sesión.
+Supabase Auth tiene habilitada la confirmación de correo. Tras registrarte, confirma el enlace recibido antes de iniciar sesión; la página permite solicitar que lo reenvíen. Si no recuerdas la contraseña, usa “Olvidé mi contraseña”. En producción, agrega tanto el dominio público como `http://localhost:3000/**` a Authentication > URL Configuration > Redirect URLs.
 
 ## Otras variantes
 

@@ -11,7 +11,7 @@
     <form id="authForm" class="auth-form">
       <span class="eyebrow">TaskFlow</span>
       <h1 id="authTitle">Iniciar sesión</h1>
-      <label class="field" for="authEmail">
+      <label id="authEmailField" class="field" for="authEmail">
         <span>Correo electrónico</span>
         <input id="authEmail" type="email" autocomplete="email" required />
       </label>
@@ -20,6 +20,8 @@
         <input id="authPassword" type="password" minlength="6" required />
       </label>
       <p id="authMessage" class="auth-message" role="status"></p>
+      <button id="resendConfirmation" class="auth-toggle hidden" type="button">Reenviar correo de confirmación</button>
+      <button id="forgotPassword" class="auth-toggle" type="button">Olvidé mi contraseña</button>
       <button id="authSubmit" class="primary-btn" type="submit">Entrar</button>
       <button id="authToggle" class="auth-toggle" type="button">Crear cuenta</button>
     </form>
