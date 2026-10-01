@@ -1,0 +1,12 @@
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+taskflow-react/runtime/
+taskflow-react/*.zip
+taskflow-react/*.tgz
+data/tasks.json
+backend/data/*.db
+.env
+.env.*
+*.log

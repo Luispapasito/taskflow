@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="logo">TF</span>
+        <span class="brand-text">TaskFlow</span>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-link active" href="#">
+          <span>☑</span>
+          <span>Mis tareas</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-title">Resumen</div>
+        <div class="summary-grid">
+          <div>
+            <span id="totalTasks" class="summary-number">0</span>
+            <span class="summary-label">Total</span>
+          </div>
+          <div>
+            <span id="pendingTasks" class="summary-number">0</span>
+            <span class="summary-label">Pendientes</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="topbar">
+        <div>
+          <span class="eyebrow">Panel de tareas</span>
+          <h1>TaskFlow</h1>
+        </div>
+        <button id="newTaskBtn" class="primary-btn">
+          <span>+</span>
+          Nueva tarea
+        </button>
+      </section>
+
+      <section class="form-panel">
+        <div class="panel-header">
+          <h2 id="formTitle">Crear tarea</h2>
+        </div>
+
+        <form id="taskForm">
+          <input type="hidden" id="taskId" />
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="title">Título</label>
+              <input type="text" id="title" placeholder="Ej. Diseñar landing page" required />
+            </div>
+
+            <div class="field">
+              <label for="status">Estado</label>
+              <select id="status">
+                <option value="pending">Pendiente</option>
+                <option value="in-progress">En progreso</option>
+                <option value="completed">Completada</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field full-width">
+            <label for="description">Descripción</label>
+            <textarea id="description" rows="4" placeholder="Escribe una descripción..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="cancelEdit" class="secondary-btn hidden">Cancelar</button>
+            <button type="submit" id="saveTask" class="primary-btn">Guardar tarea</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="tasks-section">
+        <div class="section-title">
+          <h2>Tareas</h2>
+          <div class="filters">
+            <button class="filter-chip active" data-filter="all">Todas</button>
+            <button class="filter-chip" data-filter="pending">Pendientes</button>
+            <button class="filter-chip" data-filter="in-progress">En progreso</button>
+            <button class="filter-chip" data-filter="completed">Completadas</button>
+          </div>
+        </div>
+
+        <div id="tasksList" class="tasks-list">
+          <div class="empty-state">
+            <span>Sin tareas aún</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

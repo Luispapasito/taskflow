@@ -1,0 +1,15 @@
+{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "description": "TaskFlow - Simple full stack tasks web app",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "taskflow",
+    "todo",
+    "full-stack"
+  ],
+  "license": "MIT"
+}
