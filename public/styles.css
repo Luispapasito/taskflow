@@ -269,6 +269,10 @@ textarea:focus {
   padding: 24px;
 }
 
+.auth-panel.hidden {
+  display: none;
+}
+
 .auth-form {
   width: min(100%, 420px);
   display: grid;
